@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BerufsFinder – Welcher Beruf passt zu dir?</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(135deg,#eef2ff,#f8fafc 45%,#ecfeff);color:#172033;min-height:100vh}
+.wrap{max-width:900px;margin:auto;padding:28px 18px 50px}.card{background:#fff;border:1px solid #e6eaf2;border-radius:24px;box-shadow:0 18px 55px #24304a18;padding:30px}
+.hero{text-align:center;padding:20px 10px 28px}.badge{display:inline-block;background:#eef2ff;color:#4f46e5;border-radius:999px;padding:8px 13px;font-weight:700;font-size:13px}
+h1{font-size:clamp(32px,7vw,58px);line-height:1.02;margin:16px 0 12px;letter-spacing:-1.5px}.hero p{font-size:17px;color:#596579;max-width:650px;margin:auto;line-height:1.6}
+.btn{border:0;border-radius:14px;padding:14px 20px;font-size:16px;font-weight:800;cursor:pointer;transition:.18s}.btn:hover{transform:translateY(-1px)}.primary{background:#4f46e5;color:white}.secondary{background:#eef2ff;color:#3730a3}
+.start{text-align:center;margin-top:22px}.note{font-size:13px;color:#697386;margin-top:14px}
+.top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:18px}.progress{height:10px;background:#edf0f5;border-radius:99px;overflow:hidden}.bar{height:100%;background:linear-gradient(90deg,#4f46e5,#06b6d4);width:0;transition:.25s}
+.qnum{font-weight:800;color:#4f46e5;font-size:14px;margin-top:18px}.question{font-size:clamp(24px,5vw,38px);line-height:1.15;margin:12px 0 28px}.answers{display:grid;grid-template-columns:1fr 1fr;gap:14px}.answer{padding:22px;border:2px solid #e7eaf0;background:#fff;border-radius:18px;font-size:18px;font-weight:800;cursor:pointer}.answer:hover{border-color:#818cf8;background:#f8f7ff}.answer.yes:hover{border-color:#10b981;background:#ecfdf5}.answer.no:hover{border-color:#64748b;background:#f8fafc}
+.hidden{display:none}.result{text-align:center}.result .icon{font-size:58px}.result h2{font-size:clamp(30px,6vw,46px);margin:8px 0}.group{display:inline-block;background:#eef2ff;color:#4338ca;padding:8px 13px;border-radius:999px;font-weight:800}.reason{margin:22px auto;max-width:650px;text-align:left;background:#f8fafc;border-radius:18px;padding:20px;line-height:1.65}.matches{text-align:left;margin-top:22px}.match{display:flex;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid #edf0f4}.score{font-weight:900;color:#4f46e5}
+.small{font-size:13px;color:#6b7280}.footer{text-align:center;color:#7a8494;font-size:12px;margin-top:18px}
+@media(max-width:600px){.card{padding:22px}.answers{grid-template-columns:1fr}.top{align-items:flex-start}.question{margin-bottom:22px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="start" class="card">
+    <div class="hero">
+      <span class="badge">✨ BerufsFinder</span>
+      <h1>Welcher Beruf passt zu dir?</h1>
+      <p>Beantworte 40 einfache Ja/Nein-Fragen. Deine Antworten werden miteinander gewichtet und am Ende bekommst du einen Beruf oder – wenn mehrere Richtungen ähnlich gut passen – eine passende Berufsgruppe.</p>
+      <div class="start">
+        <button class="btn primary" onclick="startQuiz()">Test starten →</button>
+        <div class="note">Dauer: ca. 5 Minuten · Es gibt kein richtig oder falsch.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="quiz" class="card hidden">
+    <div class="top"><strong id="progressText">Frage 1 von 40</strong><span class="small">Ja oder Nein</span></div>
+    <div class="progress"><div class="bar" id="bar"></div></div>
+    <div class="qnum" id="qnum">FRAGE 01</div>
+    <div class="question" id="question"></div>
+    <div class="answers">
+      <button class="answer yes" onclick="answer(true)">Ja 👍</button>
+      <button class="answer no" onclick="answer(false)">Nein</button>
+    </div>
+  </div>
+
+  <div id="result" class="card hidden result"></div>
+  <div class="footer">BerufsFinder · Eine Orientierungshilfe, keine professionelle Berufsberatung.</div>
+</div>
+
+<script>
+const professions = [
+{name:"Erzieher/in",group:"Soziales & Bildung",icon:"🧸",desc:"Du scheinst Freude daran zu haben, Menschen zu begleiten, Verantwortung zu übernehmen und eine positive Entwicklung zu unterstützen.",tags:{people:3,help:3,creative:1,active:1,organize:1}},
+{name:"Lehrer/in",group:"Bildung",icon:"📚",desc:"Deine Antworten sprechen für Interesse an Menschen, Vermitteln, Erklären und strukturiertem Arbeiten.",tags:{people:3,help:2,learn:2,organize:2,creative:1}},
+{name:"Pflegefachkraft",group:"Gesundheit & Soziales",icon:"🩺",desc:"Du wirkst hilfsbereit, verantwortungsbewusst und bereit, auch in anspruchsvollen Situationen für andere da zu sein.",tags:{help:4,people:3,active:1,organize:2}},
+{name:"Physiotherapeut/in",group:"Gesundheit",icon:"🏃",desc:"Die Kombination aus Menschenkontakt, Bewegung, praktischem Arbeiten und Helfen passt gut zu deinen Antworten.",tags:{help:3,people:2,active:3,practical:2}},
+{name:"Psychologe/Psychologin",group:"Gesundheit & Soziales",icon:"🧠",desc:"Du zeigst Interesse an Menschen, ihren Gedanken und daran, Zusammenhänge zu verstehen und zu helfen.",tags:{people:3,help:3,think:3,learn:2}},
+{name:"Sozialarbeiter/in",group:"Soziales",icon:"🤝",desc:"Deine Antworten deuten auf Empathie, Interesse an Menschen und den Wunsch hin, konkrete Unterstützung zu leisten.",tags:{people:4,help:4,organize:1}},
+{name:"Medizinische/r Fachangestellte/r",group:"Gesundheit",icon:"🏥",desc:"Du verbindest offenbar gern Organisation, Menschenkontakt und verantwortungsvolle Aufgaben.",tags:{people:3,help:2,organize:3,care:2}},
+{name:"Softwareentwickler/in",group:"IT & Technik",icon:"💻",desc:"Du scheinst gern logisch zu denken, Probleme zu lösen und dich mit digitalen Themen auseinanderzusetzen.",tags:{think:4,tech:4,creative:1,independent:2}},
+{name:"Fachinformatiker/in",group:"IT & Technik",icon:"🖥️",desc:"Technisches Interesse, systematisches Denken und das Lösen konkreter Probleme passen zu deinem Profil.",tags:{think:3,tech:4,practical:1,organize:2}},
+{name:"Elektroniker/in",group:"Technik & Handwerk",icon:"⚡",desc:"Du wirkst praktisch, lösungsorientiert und technisch interessiert – eine starke Kombination für diesen Bereich.",tags:{tech:4,practical:4,think:2,active:1}},
+{name:"Mechatroniker/in",group:"Technik & Handwerk",icon:"⚙️",desc:"Deine Antworten passen zu einer Mischung aus Technik, praktischer Arbeit und systematischem Problemlösen.",tags:{tech:4,practical:4,think:3}},
+{name:"Kfz-Mechatroniker/in",group:"Technik & Handwerk",icon:"🚗",desc:"Praktisches Arbeiten, Technik und das Finden von Lösungen scheinen gut zu deinen Vorlieben zu passen.",tags:{tech:3,practical:4,active:2}},
+{name:"Tischler/in",group:"Handwerk & Gestaltung",icon:"🪵",desc:"Du könntest Spaß daran haben, mit den Händen etwas entstehen zu lassen und dabei genau und kreativ zu arbeiten.",tags:{practical:4,creative:3,active:2}},
+{name:"Architekt/in",group:"Technik & Gestaltung",icon:"🏗️",desc:"Du vereinst offenbar kreatives Denken, Planung und Interesse daran, konkrete Dinge zu gestalten.",tags:{creative:3,think:3,organize:3,practical:1}},
+{name:"Grafikdesigner/in",group:"Kreativ & Medien",icon:"🎨",desc:"Kreativität, eigene Ideen und das Gestalten von sichtbaren Ergebnissen scheinen dir zu liegen.",tags:{creative:5,tech:1,independent:2}},
+{name:"Mediengestalter/in",group:"Kreativ & Medien",icon:"🎬",desc:"Du scheinst Gestaltung mit digitalen Werkzeugen und kreatives Problemlösen interessant zu finden.",tags:{creative:4,tech:2,think:1,organize:2}},
+{name:"Journalist/in",group:"Medien & Kommunikation",icon:"📰",desc:"Interesse an Menschen, Informationen und Kommunikation macht diesen Bereich für dich spannend.",tags:{people:2,creative:3,learn:3,think:2}},
+{name:"Kaufmann/Kauffrau",group:"Wirtschaft & Verwaltung",icon:"📊",desc:"Organisation, Kommunikation und ein strukturierter Umgang mit Aufgaben passen zu deinen Antworten.",tags:{organize:4,people:2,think:2,independent:2}},
+{name:"Polizist/in",group:"Sicherheit & öffentlicher Dienst",icon:"🚓",desc:"Du wirkst verantwortungsbewusst, aktiv und interessiert daran, in konkreten Situationen zu handeln.",tags:{people:2,active:4,help:3,organize:2}},
+{name:"Feuerwehr / Feuerwehrmann/-frau",group:"Sicherheit & Einsatz",icon:"🚒",desc:"Deine Antworten sprechen für Teamgeist, Aktivität, Hilfsbereitschaft und Bereitschaft, Verantwortung zu übernehmen.",tags:{help:4,active:5,people:2,practical:2}},
+{name:"Gärtner/in",group:"Natur & Umwelt",icon:"🌱",desc:"Praktische Arbeit, Natur und sichtbare Ergebnisse scheinen gut zu deinen Interessen zu passen.",tags:{nature:5,practical:3,active:3,creative:1}},
+{name:"Forstwirt/in",group:"Natur & Umwelt",icon:"🌲",desc:"Du scheinst eine aktive, praktische Tätigkeit in und mit der Natur interessant zu finden.",tags:{nature:5,active:4,practical:4}},
+{name:"Tierpfleger/in",group:"Tiere & Natur",icon:"🐾",desc:"Interesse an Tieren, Helfen und praktischer Arbeit passt gut zu deinem Antwortprofil.",tags:{nature:4,help:3,active:2,people:1}},
+{name:"Koch/Köchin",group:"Gastronomie & Handwerk",icon:"👨‍🍳",desc:"Du könntest Freude an praktischem Arbeiten, Kreativität, Tempo und sichtbaren Ergebnissen haben.",tags:{practical:4,creative:3,active:3,organize:2}},
+{name:"Friseur/in",group:"Beauty, Handwerk & Menschen",icon:"✂️",desc:"Kreativität, Menschenkontakt und praktisches Arbeiten kommen in deinen Antworten gemeinsam vor.",tags:{creative:3,people:4,practical:3}},
+{name:"Eventmanager/in",group:"Wirtschaft & Veranstaltungen",icon:"🎪",desc:"Planen, organisieren, kommunizieren und gleichzeitig kreativ bleiben scheint zu dir zu passen.",tags:{organize:4,people:3,creative:3,active:1}},
+{name:"Unternehmer/in",group:"Wirtschaft & Selbstständigkeit",icon:"🚀",desc:"Du wirkst eigenständig, lösungsorientiert und offen dafür, Verantwortung zu übernehmen.",tags:{independent:5,think:3,organize:3,creative:2}},
+{name:"Umweltschutz-Fachkraft",group:"Natur & Umwelt",icon:"🌍",desc:"Dein Profil zeigt Interesse an Natur, Zusammenhängen und sinnvoller praktischer Wirkung.",tags:{nature:5,think:3,help:2,learn:2}},
+{name:"Laborant/in",group:"Wissenschaft & Forschung",icon:"🔬",desc:"Genauigkeit, Neugier und systematisches Denken passen zu deinen Antworten.",tags:{think:5,learn:4,organize:2,tech:1}},
+{name:"Ingenieur/in",group:"Technik & Wissenschaft",icon:"📐",desc:"Du scheinst komplexe Probleme, Technik und strukturiertes Denken interessant zu finden.",tags:{think:5,tech:4,organize:3,creative:1}}
+];
+
+const questions = [
+["Menschen zu helfen macht dir meistens Freude?",{help:3,people:2}],
+["Du arbeitest gerne im Team?",{people:3}],
+["Du tüftelst gerne an Problemen, bis du eine Lösung findest?",{think:3}],
+["Technik und Computer interessieren dich?",{tech:3}],
+["Du arbeitest lieber praktisch als nur am Schreibtisch?",{practical:3,active:1}],
+["Du bist gerne kreativ und entwickelst eigene Ideen?",{creative:3}],
+["Du kannst dich gut selbst organisieren?",{organize:3,independent:1}],
+["Du interessierst dich für Natur, Tiere oder Umwelt?",{nature:3}],
+["Du erklärst anderen gerne etwas?",{people:2,learn:2}],
+["Du bleibst auch dann ruhig, wenn es stressig wird?",{organize:2,active:2}],
+["Du möchtest einen Beruf, bei dem du direkten Kontakt mit Menschen hast?",{people:3}],
+["Du liest oder lernst gerne über neue Themen?",{learn:3}],
+["Du hast Spaß daran, Dinge mit den Händen zu bauen oder zu reparieren?",{practical:3,tech:2}],
+["Du findest digitale Medien und Gestaltung spannend?",{creative:2,tech:2}],
+["Du übernimmst gerne Verantwortung?",{organize:2,independent:2,help:1}],
+["Du kannst gut zuhören, wenn andere ein Problem haben?",{people:2,help:3}],
+["Du arbeitest gerne genau und sorgfältig?",{organize:2,think:2}],
+["Bewegung und körperliche Aktivität gehören für dich gerne zum Arbeitsalltag?",{active:3}],
+["Du stellst häufig Fragen, weil du Dinge wirklich verstehen möchtest?",{think:2,learn:3}],
+["Du kannst dir vorstellen, mit Kindern oder Jugendlichen zu arbeiten?",{people:3,help:2}],
+["Du findest medizinische oder gesundheitliche Themen interessant?",{help:3,learn:2}],
+["Du hast Spaß an Zahlen, Logik oder systematischem Denken?",{think:4}],
+["Du würdest gerne draußen arbeiten?",{nature:2,active:2,practical:1}],
+["Du magst es, wenn deine Arbeit ein sichtbares Ergebnis hervorbringt?",{practical:3,creative:1}],
+["Du trittst gerne mit fremden Menschen in Kontakt?",{people:3}],
+["Du kannst dir vorstellen, auch mal unter Zeitdruck Entscheidungen zu treffen?",{active:2,organize:2}],
+["Du möchtest deine Arbeit möglichst selbstständig gestalten?",{independent:3}],
+["Du interessierst dich dafür, wie Maschinen oder technische Systeme funktionieren?",{tech:4,think:2}],
+["Du hast Freude daran, Texte, Bilder, Videos oder andere Inhalte zu gestalten?",{creative:4}],
+["Du planst gerne Termine, Aufgaben oder Projekte?",{organize:4}],
+["Du könntest dir vorstellen, Menschen in schwierigen Situationen zu unterstützen?",{help:4,people:2}],
+["Du bist neugierig auf wissenschaftliche Themen?",{learn:3,think:3}],
+["Du arbeitest gerne mit Werkzeugen?",{practical:3,tech:2}],
+["Du kannst dich gut in andere Menschen hineinversetzen?",{people:3,help:3}],
+["Du findest es spannend, etwas zu verkaufen, zu verhandeln oder zu präsentieren?",{people:2,organize:2,independent:2}],
+["Du magst abwechslungsreiche Arbeit lieber als jeden Tag genau dasselbe?",{active:2,creative:1,independent:1}],
+["Du möchtest mit deiner Arbeit etwas Sinnvolles für andere oder die Umwelt bewirken?",{help:3,nature:2}],
+["Du hast Geduld, wenn etwas nicht sofort klappt?",{think:2,organize:2}],
+["Du kannst dir vorstellen, später einmal eine leitende oder verantwortungsvolle Rolle zu übernehmen?",{independent:3,organize:2}]
+];
+
+let i=0, answers=[];
+function startQuiz(){i=0;answers=[];document.getElementById("start").classList.add("hidden");document.getElementById("result").classList.add("hidden");document.getElementById("quiz").classList.remove("hidden");render()}
+function render(){
+ const [q]=questions[i]; document.getElementById("question").textContent=q;
+ document.getElementById("qnum").textContent=`FRAGE ${String(i+1).padStart(2,"0")}`;
+ document.getElementById("progressText").textContent=`Frage ${i+1} von ${questions.length}`;
+ document.getElementById("bar").style.width=`${(i/questions.length)*100}%`;
+}
+function answer(yes){answers.push(yes);if(i<questions.length-1){i++;render()}else finish()}
+function finish(){
+ const scores={}; for(const p of professions)scores[p.name]=0;
+ const totals={};
+ questions.forEach(([q,t],idx)=>{if(answers[idx])for(const [k,v] of Object.entries(t))totals[k]=(totals[k]||0)+v});
+ const ranked=professions.map(p=>{
+   let s=0;for(const [k,v] of Object.entries(p.tags))s+=(totals[k]||0)*v;
+   return {...p,score:s};
+ }).sort((a,b)=>b.score-a.score);
+ const top=ranked[0], second=ranked[1];
+ const close=second && (top.score-second.score)/Math.max(top.score,1)<0.08;
+ let display=top, groupMode=false;
+ if(close){
+   const groupScores={};ranked.slice(0,8).forEach(p=>groupScores[p.group]=(groupScores[p.group]||0)+p.score);
+   const g=Object.entries(groupScores).sort((a,b)=>b[1]-a[1])[0];
+   display={name:g[0],group:"Passende Berufsgruppe",icon:"🧭",desc:"Mehrere Berufe schneiden bei deinen Antworten ähnlich gut ab. Deshalb ist eine Berufsgruppe hier aussagekräftiger als nur ein einzelner Beruf.",score:g[1]};
+   groupMode=true;
+ }
+ const max=ranked[0].score||1;
+ document.getElementById("quiz").classList.add("hidden");
+ const r=document.getElementById("result");r.classList.remove("hidden");
+ r.innerHTML=`<div class="icon">${display.icon}</div><div class="group">${display.group}</div><h2>${display.name}</h2>
+ <div class="reason"><strong>Warum?</strong><br>${display.desc}</div>
+ ${groupMode?`<p class="small">Die Top-Berufe lagen sehr nah beieinander – deshalb bekommst du bewusst eine Richtung statt einer scheinbar eindeutigen Entscheidung.</p>`:`<div class="matches"><strong>Weitere passende Berufe</strong>${ranked.slice(1,5).map(p=>`<div class="match"><span>${p.icon} ${p.name}<br><span class="small">${p.group}</span></span><span class="score">${Math.round(p.score/max*100)}%</span></div>`).join("")}</div>`}
+ <br><button class="btn primary" onclick="startQuiz()">Test nochmal machen</button>
+ <button class="btn secondary" onclick="window.print()">Ergebnis speichern / drucken</button>`;
+}
+</script>
+</body>
+</html>
